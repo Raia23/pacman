@@ -213,7 +213,7 @@ int PacManColuna(tPacMan pacMan){
     return pacMan.coluna;
 }
 
-tPacMan PacManAtualizar(tPacMan pacMan, int linha, int coluna){
+tPacMan PacManAtualizar(tPacMan pacMan, char direcao){
     pacMan.linha = linha;
     pacMan.coluna = coluna;
     return pacMan;
