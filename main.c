@@ -97,6 +97,7 @@ typedef struct jogo
     int movimentos;       // numero de movimentos que o pacman fez
     int pontos;           // numero de pontos que o pacman fez
     int vivo;             // 1 - vivo, 0 - morto
+    char jogada;
 } tJogo;
 
 tJogo JogoCriar(char *diretorio);
@@ -123,11 +124,13 @@ int main(int argc, char *argv[])
     while (!JogoAcabou(jogo))
     {
         char movimento = JogoLerJogada();
+        jogo.jogada = movimento;
         jogo = JogoMoverPacMan(jogo, movimento);
         jogo = JogoMoverFantasmas(jogo);
         jogo = JogoVerificaColisao(jogo);
         jogo = JogoAtualizarPontos(jogo);
         JogoImprimir(jogo, movimento);
+        jogo.movimentos++;
         // JogoGerarResumo(jogo);
     }
     JogoFinalizar(jogo);
@@ -430,26 +433,44 @@ tJogo JogoMoverFantasmas(tJogo jogo){
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA); // move pra cima
             }else{
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO); // se for parede, vai pra baixo
+                sentido = BAIXO;
             }
         }else if(sentido == ESQUERDA){
             if(EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) - 1) == 0){  // se nao for parede na posição da esquerda
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA);
             }else{
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA); // se for parede, vai pra direita
+                sentido = DIREITA;
             }
         }else if(sentido == BAIXO){
             if(EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]) + 1, FantasmaColuna(jogo.fantasmas[i])) == 0){ // se nao for parede na posicao de baixo
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO);
             }else{
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA); // se for parede, vai pra cima
+                sentido = CIMA;
             }
         }else if(sentido == DIREITA){ 
             if(EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) + 1) == 0){ // se nao for parede na posicao da direita
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA);
             }else{
                 jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA); // se for parede, vai pra esquerda
+                sentido = ESQUERDA;
             }
         }
+    /*
+        if(EhFantasmaLista(jogo.tamFantasmas, jogo.fantasmas, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1){
+            char sentidoPac = jogo.jogada;
+            if(sentidoPac == DIREITA && sentido == ESQUERDA){
+                jogo.vivo = 0;
+            }else if(sentidoPac == ESQUERDA && sentido == DIREITA){
+                jogo.vivo = 0;
+            }else if(sentidoPac == CIMA && sentido == BAIXO){
+                jogo.vivo = 0;
+            }else if(sentidoPac == BAIXO && sentido == CIMA){
+                jogo.vivo = 0;
+            }
+        }
+    */
     }
     return jogo;
 }
@@ -463,7 +484,7 @@ tJogo JogoVerificaColisao(tJogo jogo){
 }
 
 tJogo JogoAtualizarPontos(tJogo jogo){
-    if(EhComida(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1){
+    if(EhComida(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1 && jogo.vivo == 1){
         jogo.pontos++;
         jogo.numComidas--;
         jogo.mapa = MapaRemove(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan));
