@@ -51,7 +51,7 @@ int FantasmaLinha(tFantasma fantasma);
 int FantasmaColuna(tFantasma fantasma);
 char FantasmaSentido(tFantasma fantasma);
 char FantasmaCaractere(tFantasma fantasma);
-tFantasma FantasmaAtualizar(tFantasma fantasma, int linha, int coluna, char sentido);
+tFantasma FantasmaMover(tFantasma fantasma, char sentido);
 
 typedef struct pacMan
 {
@@ -64,7 +64,7 @@ tPacMan PacManCriar(int linha, int coluna);
 int EhPacMan(tPacMan pacMan, int linha, int coluna);
 int PacManLinha(tPacMan pacMan);
 int PacManColuna(tPacMan pacMan);
-tPacMan PacManAtualizar(tPacMan pacMan, int linha, int coluna);
+tPacMan PacManMover(tPacMan pacMan, char sentido);
 
 typedef struct mapa
 {
@@ -105,6 +105,9 @@ char JogoLerJogada();
 tJogo JogoMoverPacMan(tJogo jogo, char movimento);
 tJogo JogoMoverFantasmas(tJogo jogo);
 int JogoAcabou(tJogo jogo);
+tJogo JogoVerificaColisao(tJogo jogo);
+tJogo JogoAtualizarPontos(tJogo jogo);
+void JogoFinalizar(tJogo jogo);
 //void JogoGerarResumo(tJogo jogo);
 
 int main(int argc, char *argv[])
@@ -122,9 +125,12 @@ int main(int argc, char *argv[])
         char movimento = JogoLerJogada();
         jogo = JogoMoverPacMan(jogo, movimento);
         jogo = JogoMoverFantasmas(jogo);
+        jogo = JogoVerificaColisao(jogo);
+        jogo = JogoAtualizarPontos(jogo);
         JogoImprimir(jogo, movimento);
         // JogoGerarResumo(jogo);
     }
+    JogoFinalizar(jogo);
 
     return 0;
 }
@@ -180,9 +186,16 @@ char FantasmaSentido(tFantasma fantasma){
     return fantasma.sentido;
 }
 
-tFantasma FantasmaAtualizar(tFantasma fantasma, int linha, int coluna, char sentido){
-    fantasma.linha = linha;
-    fantasma.coluna = coluna;
+tFantasma FantasmaMover(tFantasma fantasma, char sentido){
+    if(sentido == ESQUERDA){
+        fantasma.coluna--;
+    }else if(sentido == DIREITA){
+        fantasma.coluna++;
+    }else if(sentido == CIMA){
+        fantasma.linha--;
+    }else if(sentido == BAIXO){
+        fantasma.linha++;
+    }
     fantasma.sentido = sentido;
     return fantasma;
 }
@@ -213,12 +226,18 @@ int PacManColuna(tPacMan pacMan){
     return pacMan.coluna;
 }
 
-tPacMan PacManAtualizar(tPacMan pacMan, char direcao){
-    pacMan.linha = linha;
-    pacMan.coluna = coluna;
+tPacMan PacManMover(tPacMan pacMan, char sentido){
+    if(sentido == ESQUERDA){
+        pacMan.coluna--;
+    }else if(sentido == DIREITA){
+        pacMan.coluna++;
+    }else if(sentido == CIMA){
+        pacMan.linha--;
+    }else if(sentido == BAIXO){
+        pacMan.linha++;
+    }
     return pacMan;
 }
-
 
 // Funcoes de Mapa
 
@@ -245,24 +264,25 @@ tMapa MapaCriar(FILE *arquivo, int linhas, int colunas){
         for(int j = 0; j < colunas; j++){
             fscanf(arquivo, "%c" , &mapa.matriz[i][j]);
         }
-        fscanf(arquivo, "%*c");
+        fscanf(arquivo, "\n");
     }
     return mapa;
 } 
 
 void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma]){
     for(int linha = 0; linha <mapa.linhas; linha++){
-        for(int coluna = 0; coluna < mapa.colunas; coluna++){
-            if(EhPacMan(pacMan, linha, coluna) == 1){
-                printf("%c", PACMAN);
-            }else if(EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1){
+        for(int coluna = 0; coluna < mapa.colunas; coluna++){     
+            if(EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1){
                 for(int i = 0; i < tamFantasma; i++){
                     if(EhFantasma(fantasmas[i], linha, coluna) == 1){
                         printf("%c", FantasmaCaractere(fantasmas[i]));
                         break;
                     }
                 }
-            }else{
+            }else if(EhPacMan(pacMan, linha, coluna) == 1){
+                printf("%c", PACMAN);
+            }
+            else{
                 printf("%c", mapa.matriz[linha][coluna]);
             }
         }
@@ -343,14 +363,14 @@ tJogo JogoCriar(char *diretorio){
     // Casos/Gabarito/simples/01/mapa.txt
     char nomeArquivoMapa[2000];
     sprintf(nomeArquivoMapa, "%s/mapa.txt", diretorio);
-    FILE * arquivoMapa = fopen(nomeArquivoMapa, 'r');
+    FILE * arquivoMapa = fopen(nomeArquivoMapa, "r");
     if(!arquivoMapa){
-        printf("ERRO: o programa nao conseguiu abrir o arquivo %s\n", arquivoMapa);
+        printf("ERRO: o programa nao conseguiu abrir o arquivo %s\n", nomeArquivoMapa);
         exit(1);
     }
     tJogo jogo;
     int linhas = 0, colunas = 0, limiteMovimentos = 0;
-    fscanf(arquivoMapa, "%d %d %d%*c", &linhas, &colunas, &limiteMovimentos);
+    fscanf(arquivoMapa, "%d %d %d\n", &linhas, &colunas, &limiteMovimentos);
     jogo.mapa = MapaCriar(arquivoMapa, linhas, colunas);
     jogo.pacMan = MapaAchaPacMan(jogo.mapa);
     jogo.tamFantasmas = MapaAchaFantasmas(jogo.mapa, jogo.fantasmas); 
@@ -363,6 +383,7 @@ tJogo JogoCriar(char *diretorio){
     jogo.vivo = 1;
     jogo.pontos = 0;
     jogo.movimentos = 0;
+    fclose(arquivoMapa);
     return jogo;
 }
 
@@ -375,12 +396,93 @@ void JogoImprimir(tJogo jogo, char movimento){
 
 char JogoLerJogada(){
     char movimento;
-    scanf("%c%*c", &movimento);
+    scanf("%c\n", &movimento);
     return movimento;
 }
 
 tJogo JogoMoverPacMan(tJogo jogo, char movimento){
-
+    if(movimento == CIMA){
+        if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan) - 1, PacManColuna(jogo.pacMan)) == 0){ // se nao for parede na posicao de cima
+            jogo.pacMan = PacManMover(jogo.pacMan, CIMA); // move pra cima
+        }
+        // se for parede fica parado
+    }else if(movimento == ESQUERDA){
+        if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) - 1) == 0){
+            jogo.pacMan = PacManMover(jogo.pacMan, ESQUERDA);
+        }
+    }else if(movimento == BAIXO){
+        if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan) + 1, PacManColuna(jogo.pacMan)) == 0){
+            jogo.pacMan = PacManMover(jogo.pacMan, BAIXO);
+        }
+    }else if(movimento == DIREITA){
+        if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) + 1) == 0){
+            jogo.pacMan = PacManMover(jogo.pacMan, DIREITA);
+        }
+    }
+    return jogo;
 }
-tJogo JogoMoverFantasmas(tJogo jogo){}
-int JogoAcabou(tJogo jogo){}
+
+tJogo JogoMoverFantasmas(tJogo jogo){
+    for(int i = 0; i < jogo.tamFantasmas; i++){
+        int sentido = FantasmaSentido(jogo.fantasmas[i]);
+        if(sentido == CIMA){
+            if(EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]) - 1, FantasmaColuna(jogo.fantasmas[i])) == 0){ // se nao for parede na posicao de cima
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA); // move pra cima
+            }else{
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO); // se for parede, vai pra baixo
+            }
+        }else if(sentido == ESQUERDA){
+            if(EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) - 1) == 0){  // se nao for parede na posição da esquerda
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA);
+            }else{
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA); // se for parede, vai pra direita
+            }
+        }else if(sentido == BAIXO){
+            if(EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]) + 1, FantasmaColuna(jogo.fantasmas[i])) == 0){ // se nao for parede na posicao de baixo
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO);
+            }else{
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA); // se for parede, vai pra cima
+            }
+        }else if(sentido == DIREITA){ 
+            if(EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) + 1) == 0){ // se nao for parede na posicao da direita
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA);
+            }else{
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA); // se for parede, vai pra esquerda
+            }
+        }
+    }
+    return jogo;
+}
+
+tJogo JogoVerificaColisao(tJogo jogo){
+    // verificar se tem colisao com um fantasma
+    if(EhFantasmaLista(jogo.tamFantasmas, jogo.fantasmas, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1){
+        jogo.vivo = 0;
+    }
+    return jogo;
+}
+
+tJogo JogoAtualizarPontos(tJogo jogo){
+    if(EhComida(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1){
+        jogo.pontos++;
+        jogo.numComidas--;
+        jogo.mapa = MapaRemove(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan));
+    }
+    return jogo;
+}
+
+int JogoAcabou(tJogo jogo){
+    if(jogo.numComidas == 0 || jogo.movimentos == jogo.limiteMovimentos || jogo.vivo == 0){
+        return 1;
+    }
+    return 0;
+}
+
+void JogoFinalizar(tJogo jogo){
+    if(jogo.vivo == 1 && jogo.numComidas == 0){ // se o pacman estiver vivo e nao tiver mais comidas ou seja nao excedeu o numero maximo de movimentos
+        printf("Voce venceu!\n");
+    }else{
+        printf("Game over!\n");
+    }
+    printf("Pontuacao final: %d\n", jogo.pontos);
+}
