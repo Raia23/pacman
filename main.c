@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 /*
     Trabalho de Programacao 1
     Jogo do Pacman
@@ -69,12 +70,12 @@ typedef struct mapa
     char matriz[MAX_LINHAS][MAX_COLUNAS];
 } tMapa;
 
+int EhFantasmaMapa(tMapa mapa, int linha, int coluna);
+int EhPacManMapa(tMapa mapa, int linha, int coluna);
 tMapa MapaCriar(FILE *arquivo, int linhas, int colunas);
 void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma]);
 int EhParede(tMapa mapa, int linha, int coluna);
 int EhComida(tMapa mapa, int linha, int coluna);
-int EhPacManMapa(tMapa mapa, int linha, int coluna);
-int EhFantasmaMapa(tMapa mapa, int linha, int coluna);
 tPacMan MapaAchaPacMan(tMapa mapa);
 int MapaAchaFantasmas(tMapa mapa, tFantasma fantasmas[MAX_FANTASMAS]);
 tMapa MapaTiraComida(tMapa mapa, int linha, int coluna);
@@ -101,7 +102,7 @@ char JogoLerJogada();
 tJogo JogoMoverPacMan(tJogo jogo, char movimento);
 tJogo JogoMoverFantasmas(tJogo jogo);
 int JogoAcabou(tJogo jogo);
-void JogoGerarResumo(tJogo jogo);
+//void JogoGerarResumo(tJogo jogo);
 
 int main(int argc, char *argv[])
 {
@@ -124,4 +125,34 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+// Funcoes de Fantasma -- comeca por aqui
+if(fantasma == 'B' || fantasma == 'P' || fantasma == 'I' || fantasma== 'C')
+{
+    if(fantasma == 'B')
+    {
+        for(int i == 1; i <= ; i++)
+
+    }
+
+    else(fantasma == 'P')
+    {
+
+    }
+
+    else if(fantasma == 'I')
+    {
+
+    }
+
+    else if(fantasma == 'C')
+    {
+
+    }
+}
+// Funcoes de PacMan -- aqui tambem
+
+// Funcoes de Mapa
+
+// Funcoes de Jogo
 
