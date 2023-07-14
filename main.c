@@ -21,7 +21,12 @@
 #define FANTASMA_I 'I'
 #define FANTASMA_C 'C'
 #define PACMAN '>'
-/*
+#define W 0
+#define A 1
+#define S 2
+#define D 3
+
+
 typedef struct ranking{
     char direcao;
     int pontos;
@@ -29,12 +34,9 @@ typedef struct ranking{
     int movimentos;
 }tRanking;
 
-tRanking RankingCriar(char direcao, int pontos, int colisao, int movimentos);
-void RankingImprimir(tRanking ranking);
+tRanking RankingCriar(int i);
 tRanking RankingAtualizar(tRanking ranking, char direcao, int pontos, int colisao, int movimentos);
-void RankingOrdenar(int tam, tRanking ranking[tam]);
-void RankingGerarArquivo(int tam, tRanking ranking[tam], char *diretorio);
-*/
+void RankingGerarArquivo(int tamRanking, tRanking ranking[tamRanking], FILE *arqRanking);
 
 typedef struct fantasma
 {
@@ -85,6 +87,17 @@ int MapaAchaFantasmas(tMapa mapa, tFantasma fantasmas[MAX_FANTASMAS]);
 int MapaNumeroLinhas(tMapa mapa);
 int MapaNumeroColunas(tMapa mapa);
 int MapaNumeroComidas(tMapa mapa);
+void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], FILE *arqInicializacao);
+
+typedef struct trilha{
+    int linha;
+    int coluna;
+    int matrix[MAX_LINHAS][MAX_COLUNAS];
+}tTrilha;
+
+tTrilha TrilhaCriar(int linhas, int colunas);
+tTrilha TrilhaAtualizar(tTrilha trilha, int linha, int coluna, int movimento);
+void TrilhaGerarArquivo(tTrilha trilha, FILE *arqTrilha);
 
 typedef struct jogo
 {
@@ -97,6 +110,7 @@ typedef struct jogo
     int movimentos;       // numero de movimentos que o pacman fez
     int pontos;           // numero de pontos que o pacman fez
     int vivo;             // 1 - vivo, 0 - morto
+    tRanking ranking[4];
     char jogada;
 } tJogo;
 
@@ -110,7 +124,8 @@ tJogo JogoVerificaColisao(tJogo jogo);
 tJogo JogoAtualizarPontos(tJogo jogo);
 void JogoFinalizar(tJogo jogo);
 void JogoGerarResumo(tJogo jogo, FILE *arqResumo, char movimento);
-
+void JogoGerarInicializacao(tJogo jogo, FILE *arqInicializacao);
+void JogoGerarEstatistica(tJogo jogo, FILE *arqEstatistica);
 int main(int argc, char *argv[])
 {
     if (argc < 2)
@@ -129,6 +144,42 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    char nomeArqInicializacao[1000];
+    sprintf(nomeArqInicializacao, "%s/saida/inicializacao.txt", argv[1]);
+    FILE *arqInicializacao = fopen(nomeArqInicializacao, "w");
+    if(arqInicializacao == NULL){
+        printf("Erro: Nao foi possivel criar o arquivo de inicializacao\n");
+        return 1;
+    }
+
+    JogoGerarInicializacao(jogo, arqInicializacao);
+    tTrilha trilha = TrilhaCriar(MapaNumeroLinhas(jogo.mapa), MapaNumeroColunas(jogo.mapa));
+    fclose(arqInicializacao);
+
+    char nomeArqRanking[1000];
+    sprintf(nomeArqRanking, "%s/saida/ranking.txt", argv[1]);
+    FILE *arqRanking = fopen(nomeArqRanking, "w");
+    if(arqRanking == NULL){
+        printf("Erro: Nao foi possivel criar o arquivo de ranking\n");
+        return 1;
+    }
+
+    char nomeArqEstatistica[1000];
+    sprintf(nomeArqEstatistica, "%s/saida/estatistica.txt", argv[1]);
+    FILE *arqEstatistica = fopen(nomeArqEstatistica, "w");
+    if(arqEstatistica == NULL){
+        printf("Erro: Nao foi possivel criar o arquivo de estatistica\n");
+        return 1;
+    }
+
+    char nomeArqTrilha[1000];
+    sprintf(nomeArqTrilha, "%s/saida/trilha.txt", argv[1]);
+    FILE *arqTrilha = fopen(nomeArqTrilha, "w");
+    if(arqTrilha == NULL){
+        printf("Erro: Nao foi possivel criar o arquivo de trilha\n");
+        return 1;
+    }
+
     while (!JogoAcabou(jogo))
     {
         char movimento = JogoLerJogada();
@@ -137,11 +188,20 @@ int main(int argc, char *argv[])
         jogo = JogoMoverFantasmas(jogo);
         jogo = JogoVerificaColisao(jogo);
         jogo = JogoAtualizarPontos(jogo);
-        JogoImprimir(jogo, movimento);
         jogo.movimentos++;
+        JogoImprimir(jogo, movimento);
         JogoGerarResumo(jogo, arqResumo, movimento);
+        trilha = TrilhaAtualizar(trilha, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan), jogo.movimentos);
     }
+
     JogoFinalizar(jogo);
+    RankingGerarArquivo(4, jogo.ranking, arqRanking);
+    JogoGerarEstatistica(jogo, arqEstatistica);
+    TrilhaGerarArquivo(trilha, arqTrilha);
+
+    fclose(arqTrilha);
+    fclose(arqEstatistica);
+    fclose(arqRanking);
     fclose(arqResumo);
     return 0;
 }
@@ -368,6 +428,27 @@ int MapaNumeroComidas(tMapa mapa){
     return n_comidas;
 }
 
+void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], FILE *arqInicializacao){
+    for(int linha = 0; linha <mapa.linhas; linha++){
+        for(int coluna = 0; coluna < mapa.colunas; coluna++){     
+            if(EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1){
+                for(int i = 0; i < tamFantasma; i++){
+                    if(EhFantasma(fantasmas[i], linha, coluna) == 1){
+                        fprintf(arqInicializacao, "%c", FantasmaCaractere(fantasmas[i]));
+                        break;
+                    }
+                }
+            }else if(EhPacMan(pacMan, linha, coluna) == 1){
+                fprintf(arqInicializacao, "%c", PACMAN);
+            }
+            else{
+                fprintf(arqInicializacao, "%c", mapa.matriz[linha][coluna]);
+            }
+        }
+        fprintf(arqInicializacao, "\n");
+    }
+}
+
 // Funcoes de Jogo
 tJogo JogoCriar(char *diretorio){
     // Casos/Gabarito/simples/01
@@ -389,6 +470,11 @@ tJogo JogoCriar(char *diretorio){
     for(int i = 0; i < jogo.tamFantasmas; i++){
         jogo.mapa = MapaRemove(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i])); //remove todos os fantasmas
     }
+
+    for(int i = 0; i < 4; i++){
+        jogo.ranking[i] = RankingCriar(i);
+    }
+
     jogo.numComidas = MapaNumeroComidas(jogo.mapa);
     jogo.limiteMovimentos = limiteMovimentos;
     jogo.vivo = 1;
@@ -415,20 +501,32 @@ tJogo JogoMoverPacMan(tJogo jogo, char movimento){
     if(movimento == CIMA){
         if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan) - 1, PacManColuna(jogo.pacMan)) == 0){ // se nao for parede na posicao de cima
             jogo.pacMan = PacManMover(jogo.pacMan, CIMA); // move pra cima
+        }else{
+            jogo.ranking[W].colisao++;
         }
-        // se for parede fica parado
+        jogo.ranking[W].movimentos++;
+        
     }else if(movimento == ESQUERDA){
         if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) - 1) == 0){
             jogo.pacMan = PacManMover(jogo.pacMan, ESQUERDA);
+        }else{
+            jogo.ranking[A].colisao++;
         }
+        jogo.ranking[A].movimentos++;
     }else if(movimento == BAIXO){
         if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan) + 1, PacManColuna(jogo.pacMan)) == 0){
             jogo.pacMan = PacManMover(jogo.pacMan, BAIXO);
+        }else{
+            jogo.ranking[S].colisao++;
         }
+        jogo.ranking[S].movimentos++;
     }else if(movimento == DIREITA){
         if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) + 1) == 0){
             jogo.pacMan = PacManMover(jogo.pacMan, DIREITA);
+        }else{
+            jogo.ranking[D].colisao++;
         }
+        jogo.ranking[D].movimentos++;
     }
     return jogo;
 }
@@ -496,6 +594,16 @@ tJogo JogoAtualizarPontos(tJogo jogo){
         jogo.pontos++;
         jogo.numComidas--;
         jogo.mapa = MapaRemove(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan));
+
+        if(jogo.jogada == DIREITA){
+            jogo.ranking[D].pontos++;
+        }else if(jogo.jogada == ESQUERDA){
+            jogo.ranking[A].pontos++;
+        }else if(jogo.jogada == CIMA){
+            jogo.ranking[W].pontos++;
+        }else if(jogo.jogada == BAIXO){
+            jogo.ranking[S].pontos++;
+        }
     }
     return jogo;
 }
@@ -527,3 +635,119 @@ void JogoGerarResumo(tJogo jogo, FILE *arqResumo, char movimento){
 }
 
 
+void JogoGerarInicializacao(tJogo jogo, FILE *arqInicializacao){
+    MapaGerarInicializacao(jogo.mapa, jogo.pacMan, jogo.tamFantasmas, jogo.fantasmas, arqInicializacao);
+    fprintf(arqInicializacao, "Pac-Man comecara o jogo na linha %d e coluna %d\n", PacManLinha(jogo.pacMan) + 1, PacManColuna(jogo.pacMan) + 1);
+}
+
+void JogoGerarEstatistica(tJogo jogo, FILE *arqEstatistica){
+    fprintf(arqEstatistica, "Numero de movimentos: %d\n", jogo.movimentos);
+    fprintf(arqEstatistica, "Numero de movimentos sem pontuar: %d\n", jogo.movimentos - jogo.pontos);
+    fprintf(arqEstatistica, "Numero de colisoes com parede: %d\n", jogo.ranking[D].colisao + jogo.ranking[A].colisao + jogo.ranking[W].colisao + jogo.ranking[S].colisao);
+    fprintf(arqEstatistica, "Numero de movimentos para baixo: %d\n", jogo.ranking[S].movimentos);
+    fprintf(arqEstatistica, "Numero de movimentos para cima: %d\n", jogo.ranking[W].movimentos);
+    fprintf(arqEstatistica, "Numero de movimentos para a esquerda: %d\n", jogo.ranking[A].movimentos);
+    fprintf(arqEstatistica, "Numero de movimentos para a direita: %d\n", jogo.ranking[D].movimentos);
+}
+// ranking
+tRanking RankingCriar(int i){
+    tRanking ranking;
+    if(i == W){
+        ranking.direcao = 'w';
+    }else if(i == A){
+        ranking.direcao = 'a';
+    }else if(i == S){
+        ranking.direcao = 's';
+    }else if(i == D){
+        ranking.direcao = 'd';
+    }
+
+    ranking.pontos = 0;
+    ranking.colisao = 0;
+    ranking.movimentos = 0;
+    return ranking;
+}
+
+tRanking RankingAtualizar(tRanking ranking, char direcao, int pontos, int colisao, int movimentos){
+    ranking.direcao = direcao;
+    ranking.pontos = pontos;
+    ranking.colisao = colisao;
+    ranking.movimentos = movimentos;
+    return ranking;
+}
+
+void RankingGerarArquivo(int tamRanking, tRanking ranking[tamRanking], FILE *arqRanking){
+    // primeira etapa ordenar o ranking
+    // o melhor movimento eh aquele que mais pontos fez
+    // criterio de desempate eh o que menos colisoes teve
+    // segundo criterio de desempate eh o que mais movimentos fez
+    // terceiro criterio de desempate eh a ordem alfabetica
+    int i, j;
+    tRanking aux;
+    for(i = 0; i < tamRanking - 1; i++){
+        for(j = i + 1; j < tamRanking; j++){
+            if(ranking[i].pontos < ranking[j].pontos){ // ordenar por pontos
+                aux = ranking[i];
+                ranking[i] = ranking[j];
+                ranking[j] = aux;
+            }
+            else if(ranking[i].pontos == ranking[j].pontos){ // se os pontos forem iguais, ordenar por colisao
+                if(ranking[i].colisao > ranking[j].colisao){
+                    aux = ranking[i];
+                    ranking[i] = ranking[j];
+                    ranking[j] = aux;
+                }
+                else if(ranking[i].colisao == ranking[j].colisao){ // se os pontos e as colisoes forem iguais, ordenar por movimentos
+                    if(ranking[i].movimentos < ranking[j].movimentos){
+                        aux = ranking[i];
+                        ranking[i] = ranking[j];
+                        ranking[j] = aux;
+                    }
+                    else if(ranking[i].movimentos == ranking[j].movimentos){ // se os pontos, as colisoes e os movimentos forem iguais, ordenar por ordem alfabetica
+                        if(ranking[i].direcao > ranking[j].direcao){
+                            aux = ranking[i];
+                            ranking[i] = ranking[j];
+                            ranking[j] = aux;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // segunda etapa gerar o arquivo
+    for(i = 0; i < tamRanking; i++){
+        fprintf(arqRanking, "%c,%d,%d,%d\n", ranking[i].direcao, ranking[i].pontos, ranking[i].colisao, ranking[i].movimentos);
+    }
+}
+
+// trilha
+tTrilha TrilhaCriar(int linhas, int colunas){
+    tTrilha trilha;
+    trilha.linha = linhas;
+    trilha.coluna = colunas;
+    for(int i = 0; i < linhas; i++){
+        for(int j = 0; j < colunas; j++){
+            trilha.matrix[i][j] = -1;
+        }
+    }
+    return trilha;
+}
+tTrilha TrilhaAtualizar(tTrilha trilha, int linha, int coluna, int movimento){
+    trilha.matrix[linha][coluna] = movimento;
+    return trilha;
+}
+void TrilhaGerarArquivo(tTrilha trilha, FILE *arqTrilha){
+    for(int i = 0; i < trilha.linha; i++){
+        for(int j = 0; j < trilha.coluna; j++){
+            if(trilha.matrix[i][j] == -1){
+                fprintf(arqTrilha,"%c", PAREDE);
+            }else{
+                fprintf(arqTrilha, "%d", trilha.matrix[i][j]);
+            }
+            if(j < trilha.coluna - 1){
+                fprintf(arqTrilha, " ");
+            }
+        }
+        fprintf(arqTrilha, "\n");
+    }
+}
