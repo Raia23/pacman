@@ -109,7 +109,7 @@ int JogoAcabou(tJogo jogo);
 tJogo JogoVerificaColisao(tJogo jogo);
 tJogo JogoAtualizarPontos(tJogo jogo);
 void JogoFinalizar(tJogo jogo);
-//void JogoGerarResumo(tJogo jogo);
+void JogoGerarResumo(tJogo jogo, FILE *arqResumo, char movimento);
 
 int main(int argc, char *argv[])
 {
@@ -121,6 +121,14 @@ int main(int argc, char *argv[])
 
     tJogo jogo = JogoCriar(argv[1]);
 
+    char nomeArqResumo[1000];
+    sprintf(nomeArqResumo, "%s/saida/resumo.txt", argv[1]);
+    FILE *arqResumo = fopen(nomeArqResumo, "w");
+    if(arqResumo == NULL){
+        printf("Erro: Nao foi possivel criar o arquivo de resumo\n");
+        return 1;
+    }
+
     while (!JogoAcabou(jogo))
     {
         char movimento = JogoLerJogada();
@@ -131,10 +139,10 @@ int main(int argc, char *argv[])
         jogo = JogoAtualizarPontos(jogo);
         JogoImprimir(jogo, movimento);
         jogo.movimentos++;
-        // JogoGerarResumo(jogo);
+        JogoGerarResumo(jogo, arqResumo, movimento);
     }
     JogoFinalizar(jogo);
-
+    fclose(arqResumo);
     return 0;
 }
 
@@ -507,3 +515,15 @@ void JogoFinalizar(tJogo jogo){
     }
     printf("Pontuacao final: %d\n", jogo.pontos);
 }
+
+void JogoGerarResumo(tJogo jogo, FILE *arqResumo, char movimento){
+    if(jogo.vivo == 0){
+        fprintf(arqResumo, "Movimento %d (%c) fim de jogo por encostar em um fantasma\n", jogo.movimentos, movimento);
+    }else if(EhComida(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1){
+        fprintf(arqResumo, "Movimento %d (%c) pegou comid\n", jogo.movimentos, movimento);
+    }else if(EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1){
+        fprintf(arqResumo, "Movimento %d (%c) colidiu com a parede\n", jogo.movimentos, movimento);
+    }
+}
+
+
