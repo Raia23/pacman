@@ -25,12 +25,23 @@
 #define A 1
 #define S 2
 #define D 3
+#define TUNEL '@'
+
+typedef struct tunel {
+    int linha;
+    int coluna;
+} tTunel;
+
+tTunel TunelCriar(int linha, int coluna);
+int EhTunel(tTunel tunel[2], int linha, int coluna);
+tTunel TunelEscolheTunelParaTeleportar(tTunel tunel1, tTunel tunel2, int linha, int coluna);
 
 typedef struct estatistica {
     int w;
     int a;
     int s;
     int d;
+    int colisao;
 } tEstatistica;
 
 tEstatistica EstatisticaCriar();
@@ -76,6 +87,7 @@ int EhPacMan(tPacMan pacMan, int linha, int coluna);
 int PacManLinha(tPacMan pacMan);
 int PacManColuna(tPacMan pacMan);
 tPacMan PacManMover(tPacMan pacMan, char sentido);
+tPacMan PacManTeleportar(tPacMan pacMan, int linha, int coluna);
 
 typedef struct mapa {
     int linhas;
@@ -86,7 +98,7 @@ typedef struct mapa {
 int EhFantasmaMapa(tMapa mapa, int linha, int coluna);
 int EhPacManMapa(tMapa mapa, int linha, int coluna);
 tMapa MapaCriar(FILE *arquivo, int linhas, int colunas);
-void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma]);
+void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], tTunel tuneis[2], int numTuneis);
 int EhParede(tMapa mapa, int linha, int coluna);
 int EhComida(tMapa mapa, int linha, int coluna);
 tPacMan MapaAchaPacMan(tMapa mapa);
@@ -95,7 +107,9 @@ int MapaAchaFantasmas(tMapa mapa, tFantasma fantasmas[MAX_FANTASMAS]);
 int MapaNumeroLinhas(tMapa mapa);
 int MapaNumeroColunas(tMapa mapa);
 int MapaNumeroComidas(tMapa mapa);
-void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], FILE *arqInicializacao);
+void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], FILE *arqInicializacao, tTunel tuneis[2],
+                            int numTuneis);
+int MapaAchaTuneis(tMapa mapa, tTunel tunel[2]);
 
 typedef struct trilha {
     int linha;
@@ -119,6 +133,8 @@ typedef struct jogo {
     int vivo;             // 1 - vivo, 0 - morto
     tRanking ranking[4];
     tEstatistica estatistica;
+    tTunel tunel[2]; // tem dois tuneis na fase bonus
+    int numTuneis;
 } tJogo;
 
 tJogo JogoCriar(char *diretorio);
@@ -200,6 +216,15 @@ int main(int argc, char *argv[]) {
             jogo.pacMan = PacManMover(jogo.pacMan, movimento);
         } else if (JogoPodeMoverPacMan(jogo, movimento) == 0) {
             colisao = 1;
+            jogo.estatistica.colisao++;
+        }
+
+        // caso bonus
+        if (EhTunel(jogo.tunel, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1) {
+            tTunel tunel = TunelEscolheTunelParaTeleportar(jogo.tunel[0], jogo.tunel[1], PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan));
+            trilha = TrilhaAtualizar(trilha, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan), jogo.movimentos);
+            jogo.pacMan = PacManTeleportar(jogo.pacMan, tunel.linha, tunel.coluna);
+            colisao = 0;
         }
 
         RankingAtualizarMovimentos(jogo.ranking, movimento);
@@ -368,7 +393,7 @@ tMapa MapaCriar(FILE *arquivo, int linhas, int colunas) {
     return mapa;
 }
 
-void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma]) {
+void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], tTunel tuneis[2], int numTuneis) {
     for (int linha = 0; linha < mapa.linhas; linha++) {
         for (int coluna = 0; coluna < mapa.colunas; coluna++) {
             if (EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1) {
@@ -380,6 +405,8 @@ void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasm
                 }
             } else if (EhPacMan(pacMan, linha, coluna) == 1) {
                 printf("%c", PACMAN);
+            } else if (numTuneis > 0 && EhTunel(tuneis, linha, coluna)) {
+                printf("%c", TUNEL);
             } else {
                 printf("%c", mapa.matriz[linha][coluna]);
             }
@@ -452,7 +479,8 @@ int MapaNumeroComidas(tMapa mapa) {
     return n_comidas;
 }
 
-void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], FILE *arqInicializacao) {
+void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], FILE *arqInicializacao, tTunel tuneis[2],
+                            int numTuneis) {
     for (int linha = 0; linha < mapa.linhas; linha++) {
         for (int coluna = 0; coluna < mapa.colunas; coluna++) {
             if (EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1) {
@@ -464,6 +492,8 @@ void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantas
                 }
             } else if (EhPacMan(pacMan, linha, coluna) == 1) {
                 fprintf(arqInicializacao, "%c", PACMAN);
+            } else if (numTuneis > 0 && EhTunel(tuneis, linha, coluna) == 1) {
+                fprintf(arqInicializacao, "%c", TUNEL);
             } else {
                 fprintf(arqInicializacao, "%c", mapa.matriz[linha][coluna]);
             }
@@ -489,6 +519,14 @@ tJogo JogoCriar(char *diretorio) {
     jogo.mapa = MapaCriar(arquivoMapa, linhas, colunas);
     jogo.pacMan = MapaAchaPacMan(jogo.mapa);
     jogo.tamFantasmas = MapaAchaFantasmas(jogo.mapa, jogo.fantasmas);
+    jogo.numTuneis = MapaAchaTuneis(jogo.mapa, jogo.tunel);
+
+    if (jogo.numTuneis > 0) {
+        for (int i = 0; i < 2; i++) {
+            jogo.mapa = MapaRemove(jogo.mapa, jogo.tunel[i].linha, jogo.tunel[i].coluna);
+        }
+    }
+
     jogo.mapa = MapaRemove(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)); // remove pacman do mapa
     for (int i = 0; i < jogo.tamFantasmas; i++) {
         jogo.mapa = MapaRemove(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i])); // remove todos os fantasmas
@@ -510,7 +548,7 @@ tJogo JogoCriar(char *diretorio) {
 
 void JogoImprimir(tJogo jogo, char movimento) {
     printf("Estado do jogo apos o movimento '%c':\n", movimento);
-    MapaImprimir(jogo.mapa, jogo.pacMan, jogo.tamFantasmas, jogo.fantasmas);
+    MapaImprimir(jogo.mapa, jogo.pacMan, jogo.tamFantasmas, jogo.fantasmas, jogo.tunel, jogo.numTuneis);
     printf("Pontuacao: %d\n", jogo.pontos);
     printf("\n");
 }
@@ -641,15 +679,14 @@ void JogoGerarResumoColidiu(tJogo jogo, FILE *arqResumo, char movimento) {
 }
 
 void JogoGerarInicializacao(tJogo jogo, FILE *arqInicializacao) {
-    MapaGerarInicializacao(jogo.mapa, jogo.pacMan, jogo.tamFantasmas, jogo.fantasmas, arqInicializacao);
+    MapaGerarInicializacao(jogo.mapa, jogo.pacMan, jogo.tamFantasmas, jogo.fantasmas, arqInicializacao, jogo.tunel, jogo.numTuneis);
     fprintf(arqInicializacao, "Pac-Man comecara o jogo na linha %d e coluna %d\n", PacManLinha(jogo.pacMan) + 1, PacManColuna(jogo.pacMan) + 1);
 }
 
 void JogoGerarEstatistica(tJogo jogo, FILE *arqEstatistica) {
     fprintf(arqEstatistica, "Numero de movimentos: %d\n", jogo.movimentos);
     fprintf(arqEstatistica, "Numero de movimentos sem pontuar: %d\n", jogo.movimentos - jogo.pontos);
-    fprintf(arqEstatistica, "Numero de colisoes com parede: %d\n",
-            jogo.ranking[D].colisao + jogo.ranking[A].colisao + jogo.ranking[W].colisao + jogo.ranking[S].colisao);
+    fprintf(arqEstatistica, "Numero de colisoes com parede: %d\n", jogo.estatistica.colisao);
     fprintf(arqEstatistica, "Numero de movimentos para baixo: %d\n", jogo.estatistica.s);
     fprintf(arqEstatistica, "Numero de movimentos para cima: %d\n", jogo.estatistica.w);
     fprintf(arqEstatistica, "Numero de movimentos para esquerda: %d\n", jogo.estatistica.a);
@@ -800,6 +837,7 @@ tEstatistica EstatisticaCriar() {
     e.a = 0;
     e.s = 0;
     e.d = 0;
+    e.colisao = 0;
     return e;
 }
 
@@ -817,4 +855,52 @@ tEstatistica EstatisticaAtualizar(tEstatistica estatistica, char direcao) {
         estatistica.d++;
     }
     return estatistica;
+}
+
+// bonus
+tTunel TunelCriar(int linha, int coluna) {
+    tTunel tunel;
+    tunel.linha = linha;
+    tunel.coluna = coluna;
+    return tunel;
+}
+int EhTunel(tTunel tunel[2], int linha, int coluna) {
+    if (linha == tunel[0].linha && coluna == tunel[0].coluna) {
+        return 1;
+    } else if (linha == tunel[1].linha && coluna == tunel[1].coluna) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+tTunel TunelEscolheTunelParaTeleportar(tTunel tunel1, tTunel tunel2, int linha, int coluna) {
+    if (linha == tunel1.linha && coluna == tunel1.coluna) {
+        return tunel2;
+    } else {
+        return tunel1;
+    }
+}
+
+int MapaAchaTuneis(tMapa mapa, tTunel tunel[2]) {
+    int i, j;
+    int n = 0;
+    int achou = 0;
+    for (i = 0; i < mapa.linhas; i++) {
+        for (j = 0; j < mapa.colunas; j++) {
+            if (mapa.matriz[i][j] == TUNEL) {
+                tunel[n].linha = i;
+                tunel[n].coluna = j;
+                n++;
+                achou = 1;
+            }
+        }
+    }
+    return achou;
+}
+
+tPacMan PacManTeleportar(tPacMan pacMan, int linha, int coluna) {
+    pacMan.linha = linha;
+    pacMan.coluna = coluna;
+    return pacMan;
 }
