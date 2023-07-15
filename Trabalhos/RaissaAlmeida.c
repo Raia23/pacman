@@ -44,51 +44,9 @@ typedef struct ranking {
 } tRanking;
 
 tRanking RankingCriar(int i);
-void RankingAtualizarMovimentos(tRanking rankings[4], char direcao) {
-    if (direcao == 'w') {
-	rankings[W].movimentos++;
-    }
-    if (direcao == 'a') {
-	rankings[A].movimentos++;
-    }
-    if (direcao == 's') {
-	rankings[S].movimentos++;
-    }
-    if (direcao == 'd') {
-	rankings[D].movimentos++;
-    }
-}
-
-void RankingAtualizarColisao(tRanking rankings[4], char movimento) {
-    if (movimento == 'w') {
-	rankings[W].colisao++;
-    }
-    if (movimento == 'a') {
-	rankings[A].colisao++;
-    }
-    if (movimento == 's') {
-	rankings[S].colisao++;
-    }
-    if (movimento == 'd') {
-	rankings[D].colisao++;
-    }
-}
-
-void RankingAtualizarPontos(tRanking rankings[4], char movimento) {
-    if (movimento == 'w') {
-	rankings[W].pontos++;
-    }
-    if (movimento == 'a') {
-	rankings[A].pontos++;
-    }
-    if (movimento == 's') {
-	rankings[S].pontos++;
-    }
-    if (movimento == 'd') {
-	rankings[D].pontos++;
-    }
-}
-
+void RankingAtualizarMovimentos(tRanking rankings[4], char direcao);
+void RankingAtualizarColisao(tRanking rankings[4], char movimento);
+void RankingAtualizarPontos(tRanking rankings[4], char movimento);
 void RankingGerarArquivo(int tamRanking, tRanking ranking[tamRanking], FILE *arqRanking);
 
 typedef struct fantasma {
@@ -156,9 +114,9 @@ typedef struct jogo {
     int tamFantasmas;
     int numComidas;
     int limiteMovimentos; // numero maximo de movimentos que o pacman pode fazer
-    int movimentos;	  // numero de movimentos que o pacman fez
-    int pontos;		  // numero de pontos que o pacman fez
-    int vivo;		  // 1 - vivo, 0 - morto
+    int movimentos;       // numero de movimentos que o pacman fez
+    int pontos;           // numero de pontos que o pacman fez
+    int vivo;             // 1 - vivo, 0 - morto
     tRanking ranking[4];
     tEstatistica estatistica;
 } tJogo;
@@ -181,8 +139,8 @@ void JogoGerarResumoColidiu(tJogo jogo, FILE *arqResumo, char movimento);
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-	printf("Erro: Informe o diretorio do mapa\n");
-	return 1;
+        printf("Erro: Informe o diretorio do mapa\n");
+        return 1;
     }
 
     tJogo jogo = JogoCriar(argv[1]);
@@ -191,16 +149,16 @@ int main(int argc, char *argv[]) {
     sprintf(nomeArqResumo, "%s/saida/resumo.txt", argv[1]);
     FILE *arqResumo = fopen(nomeArqResumo, "w");
     if (arqResumo == NULL) {
-	printf("Erro: Nao foi possivel criar o arquivo de resumo\n");
-	return 1;
+        printf("Erro: Nao foi possivel criar o arquivo de resumo\n");
+        return 1;
     }
 
     char nomeArqInicializacao[1000];
     sprintf(nomeArqInicializacao, "%s/saida/inicializacao.txt", argv[1]);
     FILE *arqInicializacao = fopen(nomeArqInicializacao, "w");
     if (arqInicializacao == NULL) {
-	printf("Erro: Nao foi possivel criar o arquivo de inicializacao\n");
-	return 1;
+        printf("Erro: Nao foi possivel criar o arquivo de inicializacao\n");
+        return 1;
     }
 
     JogoGerarInicializacao(jogo, arqInicializacao);
@@ -210,69 +168,69 @@ int main(int argc, char *argv[]) {
     sprintf(nomeArqRanking, "%s/saida/ranking.txt", argv[1]);
     FILE *arqRanking = fopen(nomeArqRanking, "w");
     if (arqRanking == NULL) {
-	printf("Erro: Nao foi possivel criar o arquivo de ranking\n");
-	return 1;
+        printf("Erro: Nao foi possivel criar o arquivo de ranking\n");
+        return 1;
     }
 
     char nomeArqEstatistica[1000];
     sprintf(nomeArqEstatistica, "%s/saida/estatisticas.txt", argv[1]);
     FILE *arqEstatistica = fopen(nomeArqEstatistica, "w");
     if (arqEstatistica == NULL) {
-	printf("Erro: Nao foi possivel criar o arquivo de estatistica\n");
-	return 1;
+        printf("Erro: Nao foi possivel criar o arquivo de estatistica\n");
+        return 1;
     }
 
     char nomeArqTrilha[1000];
     sprintf(nomeArqTrilha, "%s/saida/trilha.txt", argv[1]);
     FILE *arqTrilha = fopen(nomeArqTrilha, "w");
     if (arqTrilha == NULL) {
-	printf("Erro: Nao foi possivel criar o arquivo de trilha\n");
-	return 1;
+        printf("Erro: Nao foi possivel criar o arquivo de trilha\n");
+        return 1;
     }
 
     tTrilha trilha = TrilhaCriar(MapaNumeroLinhas(jogo.mapa), MapaNumeroColunas(jogo.mapa));
     trilha = TrilhaAtualizar(trilha, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan), jogo.movimentos);
 
     while (!JogoAcabou(jogo)) {
-	char movimento = JogoLerJogada();
-	jogo.movimentos++;
-	jogo = JogoMoverFantasmas(jogo);
-	int colisao = 0;
-	if (JogoPodeMoverPacMan(jogo, movimento) == 1) {
-	    jogo.pacMan = PacManMover(jogo.pacMan, movimento);
-	} else if (JogoPodeMoverPacMan(jogo, movimento) == 0) {
-	    colisao = 1;
-	}
+        char movimento = JogoLerJogada();
+        jogo.movimentos++;
+        jogo = JogoMoverFantasmas(jogo);
+        int colisao = 0;
+        if (JogoPodeMoverPacMan(jogo, movimento) == 1) {
+            jogo.pacMan = PacManMover(jogo.pacMan, movimento);
+        } else if (JogoPodeMoverPacMan(jogo, movimento) == 0) {
+            colisao = 1;
+        }
 
-	RankingAtualizarMovimentos(jogo.ranking, movimento);
-	jogo.estatistica = EstatisticaAtualizar(jogo.estatistica, movimento);
+        RankingAtualizarMovimentos(jogo.ranking, movimento);
+        jogo.estatistica = EstatisticaAtualizar(jogo.estatistica, movimento);
 
-	if (JogoVerificaColisaoFantasma(jogo) == 1 || JogoPodeMoverPacMan(jogo, movimento == 2)) {
-	    jogo.vivo = 0;
-	    JogoGerarResumoMorreu(jogo, arqResumo, movimento);
-	    if (colisao == 1) {
-		RankingAtualizarColisao(jogo.ranking, movimento);
-		JogoGerarResumoColidiu(jogo, arqResumo, movimento);
-	    }
-	    JogoImprimir(jogo, movimento);
-	    break;
-	}
+        if (JogoVerificaColisaoFantasma(jogo) == 1 || JogoPodeMoverPacMan(jogo, movimento == 2)) {
+            jogo.vivo = 0;
+            JogoGerarResumoMorreu(jogo, arqResumo, movimento);
+            if (colisao == 1) {
+                RankingAtualizarColisao(jogo.ranking, movimento);
+                JogoGerarResumoColidiu(jogo, arqResumo, movimento);
+            }
+            JogoImprimir(jogo, movimento);
+            break;
+        }
 
-	if (colisao == 1) {
-	    RankingAtualizarColisao(jogo.ranking, movimento);
-	    JogoGerarResumoColidiu(jogo, arqResumo, movimento);
-	}
+        if (colisao == 1) {
+            RankingAtualizarColisao(jogo.ranking, movimento);
+            JogoGerarResumoColidiu(jogo, arqResumo, movimento);
+        }
 
-	if (JogoEhComida(jogo) == 1) {
-	    jogo.pontos++;
-	    jogo.numComidas--;
-	    jogo.mapa = MapaRemove(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan));
-	    RankingAtualizarPontos(jogo.ranking, movimento);
-	    JogoGerarResumoComeu(jogo, arqResumo, movimento);
-	}
+        if (JogoEhComida(jogo) == 1) {
+            jogo.pontos++;
+            jogo.numComidas--;
+            jogo.mapa = MapaRemove(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan));
+            RankingAtualizarPontos(jogo.ranking, movimento);
+            JogoGerarResumoComeu(jogo, arqResumo, movimento);
+        }
 
-	JogoImprimir(jogo, movimento);
-	trilha = TrilhaAtualizar(trilha, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan), jogo.movimentos);
+        JogoImprimir(jogo, movimento);
+        trilha = TrilhaAtualizar(trilha, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan), jogo.movimentos);
     }
 
     JogoFinalizar(jogo);
@@ -295,30 +253,30 @@ tFantasma FantasmaCriar(int linha, int coluna, char fantasma) {
     f.fantasma = fantasma;
 
     if (fantasma == FANTASMA_B) {
-	f.sentido = ESQUERDA;
+        f.sentido = ESQUERDA;
     } else if (fantasma == FANTASMA_C) {
-	f.sentido = DIREITA;
+        f.sentido = DIREITA;
     } else if (fantasma == FANTASMA_I) {
-	f.sentido = BAIXO;
+        f.sentido = BAIXO;
     } else if (fantasma == FANTASMA_P) {
-	f.sentido = CIMA;
+        f.sentido = CIMA;
     }
     return f;
 }
 
 int EhFantasma(tFantasma fantasma, int linha, int coluna) {
     if (fantasma.linha == linha && fantasma.coluna == coluna) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
 int EhFantasmaLista(int tamFantasmas, tFantasma fantasma[tamFantasmas], int linha, int coluna) {
     for (int i = 0; i < tamFantasmas; i++) {
-	if (EhFantasma(fantasma[i], linha, coluna) == 1) {
-	    return 1;
-	}
+        if (EhFantasma(fantasma[i], linha, coluna) == 1) {
+            return 1;
+        }
     }
     return 0; // nao tem fantasma correspondente a essa linha e coluna
 }
@@ -332,13 +290,13 @@ char FantasmaSentido(tFantasma fantasma) { return fantasma.sentido; }
 
 tFantasma FantasmaMover(tFantasma fantasma, char sentido) {
     if (sentido == ESQUERDA) {
-	fantasma.coluna--;
+        fantasma.coluna--;
     } else if (sentido == DIREITA) {
-	fantasma.coluna++;
+        fantasma.coluna++;
     } else if (sentido == CIMA) {
-	fantasma.linha--;
+        fantasma.linha--;
     } else if (sentido == BAIXO) {
-	fantasma.linha++;
+        fantasma.linha++;
     }
     fantasma.sentido = sentido;
     return fantasma;
@@ -356,9 +314,9 @@ tPacMan PacManCriar(int linha, int coluna) {
 
 int EhPacMan(tPacMan pacMan, int linha, int coluna) {
     if (pacMan.linha == linha && pacMan.coluna == coluna) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -368,13 +326,13 @@ int PacManColuna(tPacMan pacMan) { return pacMan.coluna; }
 
 tPacMan PacManMover(tPacMan pacMan, char sentido) {
     if (sentido == ESQUERDA) {
-	pacMan.coluna--;
+        pacMan.coluna--;
     } else if (sentido == DIREITA) {
-	pacMan.coluna++;
+        pacMan.coluna++;
     } else if (sentido == CIMA) {
-	pacMan.linha--;
+        pacMan.linha--;
     } else if (sentido == BAIXO) {
-	pacMan.linha++;
+        pacMan.linha++;
     }
     return pacMan;
 }
@@ -383,17 +341,17 @@ tPacMan PacManMover(tPacMan pacMan, char sentido) {
 
 int EhFantasmaMapa(tMapa mapa, int linha, int coluna) {
     if (mapa.matriz[linha][coluna] == FANTASMA_B || mapa.matriz[linha][coluna] == FANTASMA_P || mapa.matriz[linha][coluna] == FANTASMA_I ||
-	mapa.matriz[linha][coluna] == FANTASMA_C) {
-	return 1;
+        mapa.matriz[linha][coluna] == FANTASMA_C) {
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 int EhPacManMapa(tMapa mapa, int linha, int coluna) {
     if (mapa.matriz[linha][coluna] == PACMAN) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -402,58 +360,58 @@ tMapa MapaCriar(FILE *arquivo, int linhas, int colunas) {
     mapa.linhas = linhas;
     mapa.colunas = colunas;
     for (int i = 0; i < linhas; i++) {
-	for (int j = 0; j < colunas; j++) {
-	    fscanf(arquivo, "%c", &mapa.matriz[i][j]);
-	}
-	fscanf(arquivo, "\n");
+        for (int j = 0; j < colunas; j++) {
+            fscanf(arquivo, "%c", &mapa.matriz[i][j]);
+        }
+        fscanf(arquivo, "\n");
     }
     return mapa;
 }
 
 void MapaImprimir(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma]) {
     for (int linha = 0; linha < mapa.linhas; linha++) {
-	for (int coluna = 0; coluna < mapa.colunas; coluna++) {
-	    if (EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1) {
-		for (int i = 0; i < tamFantasma; i++) {
-		    if (EhFantasma(fantasmas[i], linha, coluna) == 1) {
-			printf("%c", FantasmaCaractere(fantasmas[i]));
-			break;
-		    }
-		}
-	    } else if (EhPacMan(pacMan, linha, coluna) == 1) {
-		printf("%c", PACMAN);
-	    } else {
-		printf("%c", mapa.matriz[linha][coluna]);
-	    }
-	}
-	printf("\n");
+        for (int coluna = 0; coluna < mapa.colunas; coluna++) {
+            if (EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1) {
+                for (int i = 0; i < tamFantasma; i++) {
+                    if (EhFantasma(fantasmas[i], linha, coluna) == 1) {
+                        printf("%c", FantasmaCaractere(fantasmas[i]));
+                        break;
+                    }
+                }
+            } else if (EhPacMan(pacMan, linha, coluna) == 1) {
+                printf("%c", PACMAN);
+            } else {
+                printf("%c", mapa.matriz[linha][coluna]);
+            }
+        }
+        printf("\n");
     }
 }
 
 int EhParede(tMapa mapa, int linha, int coluna) {
     if (mapa.matriz[linha][coluna] == PAREDE) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
 int EhComida(tMapa mapa, int linha, int coluna) {
     if (mapa.matriz[linha][coluna] == COMIDA) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
 tPacMan MapaAchaPacMan(tMapa mapa) {
     for (int linha = 0; linha < mapa.linhas; linha++) {
-	for (int coluna = 0; coluna < mapa.colunas; coluna++) {
-	    if (mapa.matriz[linha][coluna] == PACMAN) {
-		tPacMan pacMan = PacManCriar(linha, coluna);
-		return pacMan;
-	    }
-	}
+        for (int coluna = 0; coluna < mapa.colunas; coluna++) {
+            if (mapa.matriz[linha][coluna] == PACMAN) {
+                tPacMan pacMan = PacManCriar(linha, coluna);
+                return pacMan;
+            }
+        }
     }
 }
 
@@ -465,15 +423,15 @@ tMapa MapaRemove(tMapa mapa, int linha, int coluna) {
 int MapaAchaFantasmas(tMapa mapa, tFantasma fantasmas[MAX_FANTASMAS]) {
     int nFantasmas = 0;
     for (int linha = 0; linha < mapa.linhas; linha++) {
-	for (int coluna = 0; coluna < mapa.colunas; coluna++) {
-	    char charFantasma = mapa.matriz[linha][coluna];
-	    if (mapa.matriz[linha][coluna] == FANTASMA_B || mapa.matriz[linha][coluna] == FANTASMA_C || mapa.matriz[linha][coluna] == FANTASMA_I ||
-		mapa.matriz[linha][coluna] == FANTASMA_P) {
-		tFantasma fantasma = FantasmaCriar(linha, coluna, charFantasma);
-		fantasmas[nFantasmas] = fantasma;
-		nFantasmas++;
-	    }
-	}
+        for (int coluna = 0; coluna < mapa.colunas; coluna++) {
+            char charFantasma = mapa.matriz[linha][coluna];
+            if (mapa.matriz[linha][coluna] == FANTASMA_B || mapa.matriz[linha][coluna] == FANTASMA_C || mapa.matriz[linha][coluna] == FANTASMA_I ||
+                mapa.matriz[linha][coluna] == FANTASMA_P) {
+                tFantasma fantasma = FantasmaCriar(linha, coluna, charFantasma);
+                fantasmas[nFantasmas] = fantasma;
+                nFantasmas++;
+            }
+        }
     }
     return nFantasmas;
 } // dificil
@@ -485,32 +443,32 @@ int MapaNumeroColunas(tMapa mapa) { return mapa.colunas; }
 int MapaNumeroComidas(tMapa mapa) {
     int n_comidas = 0;
     for (int linha = 0; linha < mapa.linhas; linha++) {
-	for (int coluna = 0; coluna < mapa.colunas; coluna++) {
-	    if (mapa.matriz[linha][coluna] == COMIDA) {
-		n_comidas++;
-	    }
-	}
+        for (int coluna = 0; coluna < mapa.colunas; coluna++) {
+            if (mapa.matriz[linha][coluna] == COMIDA) {
+                n_comidas++;
+            }
+        }
     }
     return n_comidas;
 }
 
 void MapaGerarInicializacao(tMapa mapa, tPacMan pacMan, int tamFantasma, tFantasma fantasmas[tamFantasma], FILE *arqInicializacao) {
     for (int linha = 0; linha < mapa.linhas; linha++) {
-	for (int coluna = 0; coluna < mapa.colunas; coluna++) {
-	    if (EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1) {
-		for (int i = 0; i < tamFantasma; i++) {
-		    if (EhFantasma(fantasmas[i], linha, coluna) == 1) {
-			fprintf(arqInicializacao, "%c", FantasmaCaractere(fantasmas[i]));
-			break;
-		    }
-		}
-	    } else if (EhPacMan(pacMan, linha, coluna) == 1) {
-		fprintf(arqInicializacao, "%c", PACMAN);
-	    } else {
-		fprintf(arqInicializacao, "%c", mapa.matriz[linha][coluna]);
-	    }
-	}
-	fprintf(arqInicializacao, "\n");
+        for (int coluna = 0; coluna < mapa.colunas; coluna++) {
+            if (EhFantasmaLista(tamFantasma, fantasmas, linha, coluna) == 1) {
+                for (int i = 0; i < tamFantasma; i++) {
+                    if (EhFantasma(fantasmas[i], linha, coluna) == 1) {
+                        fprintf(arqInicializacao, "%c", FantasmaCaractere(fantasmas[i]));
+                        break;
+                    }
+                }
+            } else if (EhPacMan(pacMan, linha, coluna) == 1) {
+                fprintf(arqInicializacao, "%c", PACMAN);
+            } else {
+                fprintf(arqInicializacao, "%c", mapa.matriz[linha][coluna]);
+            }
+        }
+        fprintf(arqInicializacao, "\n");
     }
 }
 
@@ -522,8 +480,8 @@ tJogo JogoCriar(char *diretorio) {
     sprintf(nomeArquivoMapa, "%s/mapa.txt", diretorio);
     FILE *arquivoMapa = fopen(nomeArquivoMapa, "r");
     if (!arquivoMapa) {
-	printf("ERRO: o programa nao conseguiu abrir o arquivo %s\n", nomeArquivoMapa);
-	exit(1);
+        printf("ERRO: o programa nao conseguiu abrir o arquivo %s\n", nomeArquivoMapa);
+        exit(1);
     }
     tJogo jogo;
     int linhas = 0, colunas = 0, limiteMovimentos = 0;
@@ -533,11 +491,11 @@ tJogo JogoCriar(char *diretorio) {
     jogo.tamFantasmas = MapaAchaFantasmas(jogo.mapa, jogo.fantasmas);
     jogo.mapa = MapaRemove(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)); // remove pacman do mapa
     for (int i = 0; i < jogo.tamFantasmas; i++) {
-	jogo.mapa = MapaRemove(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i])); // remove todos os fantasmas
+        jogo.mapa = MapaRemove(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i])); // remove todos os fantasmas
     }
 
     for (int i = 0; i < 4; i++) {
-	jogo.ranking[i] = RankingCriar(i);
+        jogo.ranking[i] = RankingCriar(i);
     }
 
     jogo.estatistica = EstatisticaCriar();
@@ -565,78 +523,78 @@ char JogoLerJogada() {
 
 int JogoPodeMoverPacMan(tJogo jogo, char movimento) {
     if (EhFantasmaLista(jogo.tamFantasmas, jogo.fantasmas, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1) {
-	for (int i = 0; i < jogo.tamFantasmas; i++) {
-	    if (EhFantasma(jogo.fantasmas[i], PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1) {
-		char fantasmaSentido = FantasmaSentido(jogo.fantasmas[i]);
-		if (fantasmaSentido == CIMA && movimento == BAIXO) {
-		    return 2;
-		} else if (fantasmaSentido == BAIXO && movimento == CIMA) {
-		    return 2;
-		} else if (fantasmaSentido == ESQUERDA && movimento == DIREITA) {
-		    return 2;
-		} else if (fantasmaSentido == DIREITA && movimento == ESQUERDA) {
-		    return 2;
-		}
-	    }
-	}
+        for (int i = 0; i < jogo.tamFantasmas; i++) {
+            if (EhFantasma(jogo.fantasmas[i], PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1) {
+                char fantasmaSentido = FantasmaSentido(jogo.fantasmas[i]);
+                if (fantasmaSentido == CIMA && movimento == BAIXO) {
+                    return 2;
+                } else if (fantasmaSentido == BAIXO && movimento == CIMA) {
+                    return 2;
+                } else if (fantasmaSentido == ESQUERDA && movimento == DIREITA) {
+                    return 2;
+                } else if (fantasmaSentido == DIREITA && movimento == ESQUERDA) {
+                    return 2;
+                }
+            }
+        }
     }
 
     if (movimento == CIMA) {
-	if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan) - 1, PacManColuna(jogo.pacMan)) == 0) { // se nao for parede na posicao de cima
-	    return 1;
-	}
-	return 0;
+        if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan) - 1, PacManColuna(jogo.pacMan)) == 0) { // se nao for parede na posicao de cima
+            return 1;
+        }
+        return 0;
     } else if (movimento == ESQUERDA) {
-	if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) - 1) == 0) {
-	    return 1;
-	}
-	return 0;
+        if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) - 1) == 0) {
+            return 1;
+        }
+        return 0;
     } else if (movimento == BAIXO) {
-	if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan) + 1, PacManColuna(jogo.pacMan)) == 0) {
-	    return 1;
-	}
-	return 0;
+        if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan) + 1, PacManColuna(jogo.pacMan)) == 0) {
+            return 1;
+        }
+        return 0;
     } else if (movimento == DIREITA) {
-	if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) + 1) == 0) {
-	    return 1;
-	}
-	return 0;
+        if (EhParede(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan) + 1) == 0) {
+            return 1;
+        }
+        return 0;
     }
     return 0;
 }
 
 tJogo JogoMoverFantasmas(tJogo jogo) {
     for (int i = 0; i < jogo.tamFantasmas; i++) {
-	int sentido = FantasmaSentido(jogo.fantasmas[i]);
-	if (sentido == CIMA) {
-	    if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]) - 1, FantasmaColuna(jogo.fantasmas[i])) == 0) { // se nao for parede na posicao de cima
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA);
-	    } else {
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO); // se for parede, vai pra baixo
-		sentido = BAIXO;
-	    }
-	} else if (sentido == ESQUERDA) {
-	    if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) - 1) == 0) { // se nao for parede na posição da esquerda
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA);
-	    } else {
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA); // se for parede, vai pra direita
-		sentido = DIREITA;
-	    }
-	} else if (sentido == BAIXO) {
-	    if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]) + 1, FantasmaColuna(jogo.fantasmas[i])) == 0) { // se nao for parede na posicao de baixo
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO);
-	    } else {
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA); // se for parede, vai pra cima
-		sentido = CIMA;
-	    }
-	} else if (sentido == DIREITA) {
-	    if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) + 1) == 0) { // se nao for parede na posicao da direita
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA);
-	    } else {
-		jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA); // se for parede, vai pra esquerda
-		sentido = ESQUERDA;
-	    }
-	}
+        int sentido = FantasmaSentido(jogo.fantasmas[i]);
+        if (sentido == CIMA) {
+            if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]) - 1, FantasmaColuna(jogo.fantasmas[i])) == 0) { // se nao for parede na posicao de cima
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA);
+            } else {
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO); // se for parede, vai pra baixo
+                sentido = BAIXO;
+            }
+        } else if (sentido == ESQUERDA) {
+            if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) - 1) == 0) { // se nao for parede na posição da esquerda
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA);
+            } else {
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA); // se for parede, vai pra direita
+                sentido = DIREITA;
+            }
+        } else if (sentido == BAIXO) {
+            if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]) + 1, FantasmaColuna(jogo.fantasmas[i])) == 0) { // se nao for parede na posicao de baixo
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], BAIXO);
+            } else {
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], CIMA); // se for parede, vai pra cima
+                sentido = CIMA;
+            }
+        } else if (sentido == DIREITA) {
+            if (EhParede(jogo.mapa, FantasmaLinha(jogo.fantasmas[i]), FantasmaColuna(jogo.fantasmas[i]) + 1) == 0) { // se nao for parede na posicao da direita
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], DIREITA);
+            } else {
+                jogo.fantasmas[i] = FantasmaMover(jogo.fantasmas[i], ESQUERDA); // se for parede, vai pra esquerda
+                sentido = ESQUERDA;
+            }
+        }
     }
     return jogo;
 }
@@ -644,30 +602,30 @@ tJogo JogoMoverFantasmas(tJogo jogo) {
 int JogoVerificaColisaoFantasma(tJogo jogo) {
     // verificar se tem colisao com um fantasma
     if (EhFantasmaLista(jogo.tamFantasmas, jogo.fantasmas, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1) {
-	return 1;
+        return 1;
     }
     return 0;
 }
 
 int JogoEhComida(tJogo jogo) {
     if (EhComida(jogo.mapa, PacManLinha(jogo.pacMan), PacManColuna(jogo.pacMan)) == 1 && jogo.vivo == 1) {
-	return 1;
+        return 1;
     }
     return 0;
 }
 
 int JogoAcabou(tJogo jogo) {
     if (jogo.numComidas == 0 || jogo.movimentos == jogo.limiteMovimentos || jogo.vivo == 0) {
-	return 1;
+        return 1;
     }
     return 0;
 }
 
 void JogoFinalizar(tJogo jogo) {
     if (jogo.vivo == 1 && jogo.numComidas == 0) { // se o pacman estiver vivo e nao tiver mais comidas ou seja nao excedeu o numero maximo de movimentos
-	printf("Voce venceu!\n");
+        printf("Voce venceu!\n");
     } else {
-	printf("Game over!\n");
+        printf("Game over!\n");
     }
     printf("Pontuacao final: %d\n", jogo.pontos);
 }
@@ -691,7 +649,7 @@ void JogoGerarEstatistica(tJogo jogo, FILE *arqEstatistica) {
     fprintf(arqEstatistica, "Numero de movimentos: %d\n", jogo.movimentos);
     fprintf(arqEstatistica, "Numero de movimentos sem pontuar: %d\n", jogo.movimentos - jogo.pontos);
     fprintf(arqEstatistica, "Numero de colisoes com parede: %d\n",
-	    jogo.ranking[D].colisao + jogo.ranking[A].colisao + jogo.ranking[W].colisao + jogo.ranking[S].colisao);
+            jogo.ranking[D].colisao + jogo.ranking[A].colisao + jogo.ranking[W].colisao + jogo.ranking[S].colisao);
     fprintf(arqEstatistica, "Numero de movimentos para baixo: %d\n", jogo.estatistica.s);
     fprintf(arqEstatistica, "Numero de movimentos para cima: %d\n", jogo.estatistica.w);
     fprintf(arqEstatistica, "Numero de movimentos para esquerda: %d\n", jogo.estatistica.a);
@@ -701,19 +659,64 @@ void JogoGerarEstatistica(tJogo jogo, FILE *arqEstatistica) {
 tRanking RankingCriar(int i) {
     tRanking ranking;
     if (i == W) {
-	ranking.direcao = 'w';
+        ranking.direcao = 'w';
     } else if (i == A) {
-	ranking.direcao = 'a';
+        ranking.direcao = 'a';
     } else if (i == S) {
-	ranking.direcao = 's';
+        ranking.direcao = 's';
     } else if (i == D) {
-	ranking.direcao = 'd';
+        ranking.direcao = 'd';
     }
 
     ranking.pontos = 0;
     ranking.colisao = 0;
     ranking.movimentos = 0;
     return ranking;
+}
+
+void RankingAtualizarMovimentos(tRanking rankings[4], char direcao) {
+    if (direcao == 'w') {
+        rankings[W].movimentos++;
+    }
+    if (direcao == 'a') {
+        rankings[A].movimentos++;
+    }
+    if (direcao == 's') {
+        rankings[S].movimentos++;
+    }
+    if (direcao == 'd') {
+        rankings[D].movimentos++;
+    }
+}
+
+void RankingAtualizarColisao(tRanking rankings[4], char movimento) {
+    if (movimento == 'w') {
+        rankings[W].colisao++;
+    }
+    if (movimento == 'a') {
+        rankings[A].colisao++;
+    }
+    if (movimento == 's') {
+        rankings[S].colisao++;
+    }
+    if (movimento == 'd') {
+        rankings[D].colisao++;
+    }
+}
+
+void RankingAtualizarPontos(tRanking rankings[4], char movimento) {
+    if (movimento == 'w') {
+        rankings[W].pontos++;
+    }
+    if (movimento == 'a') {
+        rankings[A].pontos++;
+    }
+    if (movimento == 's') {
+        rankings[S].pontos++;
+    }
+    if (movimento == 'd') {
+        rankings[D].pontos++;
+    }
 }
 
 void RankingGerarArquivo(int tamRanking, tRanking ranking[tamRanking], FILE *arqRanking) {
@@ -725,36 +728,36 @@ void RankingGerarArquivo(int tamRanking, tRanking ranking[tamRanking], FILE *arq
     int i, j;
     tRanking aux;
     for (i = 0; i < tamRanking - 1; i++) {
-	for (j = i + 1; j < tamRanking; j++) {
-	    if (ranking[i].pontos < ranking[j].pontos) { // ordenar por pontos
-		aux = ranking[i];
-		ranking[i] = ranking[j];
-		ranking[j] = aux;
-	    } else if (ranking[i].pontos == ranking[j].pontos) { // se os pontos forem iguais, ordenar por colisao
-		if (ranking[i].colisao > ranking[j].colisao) {
-		    aux = ranking[i];
-		    ranking[i] = ranking[j];
-		    ranking[j] = aux;
-		} else if (ranking[i].colisao == ranking[j].colisao) { // se os pontos e as colisoes forem iguais, ordenar por movimentos
-		    if (ranking[i].movimentos < ranking[j].movimentos) {
-			aux = ranking[i];
-			ranking[i] = ranking[j];
-			ranking[j] = aux;
-		    } else if (ranking[i].movimentos ==
-			       ranking[j].movimentos) { // se os pontos, as colisoes e os movimentos forem iguais, ordenar por ordem alfabetica
-			if (ranking[i].direcao > ranking[j].direcao) {
-			    aux = ranking[i];
-			    ranking[i] = ranking[j];
-			    ranking[j] = aux;
-			}
-		    }
-		}
-	    }
-	}
+        for (j = i + 1; j < tamRanking; j++) {
+            if (ranking[i].pontos < ranking[j].pontos) { // ordenar por pontos
+                aux = ranking[i];
+                ranking[i] = ranking[j];
+                ranking[j] = aux;
+            } else if (ranking[i].pontos == ranking[j].pontos) { // se os pontos forem iguais, ordenar por colisao
+                if (ranking[i].colisao > ranking[j].colisao) {
+                    aux = ranking[i];
+                    ranking[i] = ranking[j];
+                    ranking[j] = aux;
+                } else if (ranking[i].colisao == ranking[j].colisao) { // se os pontos e as colisoes forem iguais, ordenar por movimentos
+                    if (ranking[i].movimentos < ranking[j].movimentos) {
+                        aux = ranking[i];
+                        ranking[i] = ranking[j];
+                        ranking[j] = aux;
+                    } else if (ranking[i].movimentos ==
+                               ranking[j].movimentos) { // se os pontos, as colisoes e os movimentos forem iguais, ordenar por ordem alfabetica
+                        if (ranking[i].direcao > ranking[j].direcao) {
+                            aux = ranking[i];
+                            ranking[i] = ranking[j];
+                            ranking[j] = aux;
+                        }
+                    }
+                }
+            }
+        }
     }
     // segunda etapa gerar o arquivo
     for (i = 0; i < tamRanking; i++) {
-	fprintf(arqRanking, "%c,%d,%d,%d\n", ranking[i].direcao, ranking[i].pontos, ranking[i].colisao, ranking[i].movimentos);
+        fprintf(arqRanking, "%c,%d,%d,%d\n", ranking[i].direcao, ranking[i].pontos, ranking[i].colisao, ranking[i].movimentos);
     }
 }
 
@@ -764,9 +767,9 @@ tTrilha TrilhaCriar(int linhas, int colunas) {
     trilha.linha = linhas;
     trilha.coluna = colunas;
     for (int i = 0; i < linhas; i++) {
-	for (int j = 0; j < colunas; j++) {
-	    trilha.matrix[i][j] = -1;
-	}
+        for (int j = 0; j < colunas; j++) {
+            trilha.matrix[i][j] = -1;
+        }
     }
     return trilha;
 }
@@ -776,17 +779,17 @@ tTrilha TrilhaAtualizar(tTrilha trilha, int linha, int coluna, int movimento) {
 }
 void TrilhaGerarArquivo(tTrilha trilha, FILE *arqTrilha) {
     for (int i = 0; i < trilha.linha; i++) {
-	for (int j = 0; j < trilha.coluna; j++) {
-	    if (trilha.matrix[i][j] == -1) {
-		fprintf(arqTrilha, "%c", PAREDE);
-	    } else {
-		fprintf(arqTrilha, "%d", trilha.matrix[i][j]);
-	    }
-	    if (j < trilha.coluna - 1) {
-		fprintf(arqTrilha, " ");
-	    }
-	}
-	fprintf(arqTrilha, "\n");
+        for (int j = 0; j < trilha.coluna; j++) {
+            if (trilha.matrix[i][j] == -1) {
+                fprintf(arqTrilha, "%c", PAREDE);
+            } else {
+                fprintf(arqTrilha, "%d", trilha.matrix[i][j]);
+            }
+            if (j < trilha.coluna - 1) {
+                fprintf(arqTrilha, " ");
+            }
+        }
+        fprintf(arqTrilha, "\n");
     }
 }
 
@@ -802,16 +805,16 @@ tEstatistica EstatisticaCriar() {
 
 tEstatistica EstatisticaAtualizar(tEstatistica estatistica, char direcao) {
     if (direcao == 'w') {
-	estatistica.w++;
+        estatistica.w++;
     }
     if (direcao == 'a') {
-	estatistica.a++;
+        estatistica.a++;
     }
     if (direcao == 's') {
-	estatistica.s++;
+        estatistica.s++;
     }
     if (direcao == 'd') {
-	estatistica.d++;
+        estatistica.d++;
     }
     return estatistica;
 }
